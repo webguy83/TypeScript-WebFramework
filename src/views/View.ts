@@ -1,8 +1,14 @@
 import { Model } from '../models/Model';
 
 export abstract class View<T extends Model<K>, K> {
+  regions: { [key: string]: Element } = {};
+
   constructor(public parent: Element, public model: T) {
     this.bindModel();
+  }
+
+  regionsMap(): { [key: string]: string } {
+    return {};
   }
 
   eventsMap(): { [key: string]: () => void } {
@@ -28,12 +34,30 @@ export abstract class View<T extends Model<K>, K> {
     });
   }
 
+  mapRegions(fragment: DocumentFragment) {
+    const regionsMap = this.regionsMap();
+
+    Object.keys(regionsMap).forEach((key: string) => {
+      const selector = regionsMap[key];
+      const element = fragment.querySelector(selector);
+
+      if (element) {
+        this.regions[key] = element;
+      }
+    });
+  }
+
+  onRender(): void {}
+
   render(): void {
     this.parent.innerHTML = '';
     const templateElm = document.createElement('template');
     templateElm.innerHTML = this.template();
 
     this.bindEvents(templateElm.content);
+    this.mapRegions(templateElm.content);
+
+    this.onRender();
 
     this.parent.append(templateElm.content);
   }
